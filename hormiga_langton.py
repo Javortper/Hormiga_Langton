@@ -2,7 +2,7 @@
 """
 Created on Fri Jan  4 12:49:58 2019
 
-@author: Javi_
+@author: Javi, Fabio
 """
 
 import pygame
@@ -19,10 +19,14 @@ HEIGHT = 8
 MARGIN = 1
 WINDOW_CTE = WIDTH + MARGIN
 EXTRA_WINDOW = 400
+BORRAR = False
+UNA_ITERACION = False
+PAUSA_STR = "Pausado"
+ITERACIONES = 0
+POBLACION = 0
+PULSAR_UNA_VEZ = 1
 
-
-print("Introducir dimensión")
-DIMENSION = int(input())
+DIMENSION = 80
 tablero = []
 
 ultimo_movimiento = None #Ultimo movimiento que hizo la hormiga
@@ -38,7 +42,7 @@ pygame.init()
 WINDOW_SIZE = [WINDOW_CTE*DIMENSION + EXTRA_WINDOW, WINDOW_CTE*DIMENSION]
 print(WINDOW_SIZE)
 screen = pygame.display.set_mode(WINDOW_SIZE)
-pygame.display.set_caption("Game of Life")
+pygame.display.set_caption("Hormiga")
 done = False
 clock = pygame.time.Clock()
 
@@ -46,29 +50,50 @@ clock = pygame.time.Clock()
 pygame.font.init()
 FONT_CABECERA = pygame.font.SysFont('Arial',20)
 TEXT_CABECERA = FONT_CABECERA.render('Hormiga de Langton', True, WHITE)
+FONT_CABECERA = pygame.font.SysFont('Arial',50)
+FONT_START = pygame.font.SysFont('Arial',15)
+FONT_AUTORES = pygame.font.SysFont('Arial',15)
+INFO_TEXT1 = FONT_START.render("Pulsa espacio para reanudar/pausar el juego.", True, WHITE)
+INFO_TEXT3 = FONT_START.render("Con el juego en pausa, pulsa R para reiniciar el juego.", True, WHITE)
+INFO_TEXT4 = FONT_START.render("Con el juego en pausa, pulsa S para realizar una iteración.", True, WHITE)
+PAUSA_TEXT = FONT_START.render("El juego está actualmente: " +PAUSA_STR, True, WHITE)
+ITERA_TEXT = FONT_START.render("Número de iteraciones: " + str(ITERACIONES), True, WHITE)
+POBLACION_TEXT = FONT_START.render("Población" + str(POBLACION), True, WHITE)
+AUTORES_TEXT = FONT_AUTORES.render("Proyecto realizado por Fabio Rodríguez Macías y Javier Ortiz Pérez", True, WHITE)
+AUTORES_TEXT2 = FONT_AUTORES.render("Matemáticas para la Computación", True, WHITE)
+AUTORES_TEXT3 = FONT_AUTORES.render("Universidad de Sevilla", True, WHITE)
+AUTORES_TEXT4 = FONT_AUTORES.render("Grado en Ingeniería Informática - Tecnologías Informáticas", True, WHITE)
+AUTORES_TEXT5 = FONT_AUTORES.render("Curso 2018/2019", True, WHITE)
 
 
 def listener(tablero): #Está a la escucha del raton
     global PAUSE
+    global UNA_ITERACION
+    global BORRAR
+    global PAUSA_STR
+    global PAUSA_TEXT
+    global PULSAR_UNA_VEZ
     for event in pygame.event.get():  # usuario hace algo
         if event.type == pygame.QUIT:  # si el usuario hace click, cierra
-            done = True  # variable done true, fin del bucle
             pygame.quit()
-        elif event.type == pygame.MOUSEBUTTONDOWN or pygame.mouse.get_pressed()[0]: #Se ejecuta cada vez que se clicka
-            pos = pygame.mouse.get_pos()
-            if pos[0] < WINDOW_CTE*DIMENSION:
-            # Cambiamos las coordenadas x/y por las del tablero
-                column = pos[0] // (WIDTH + MARGIN)
-                row = pos[1] // (HEIGHT + MARGIN)
-            # ponemos esta posición en 1
-                if PAUSE == 1:
-                    tablero[row][column] = 2
-        elif event.type == pygame.KEYDOWN:
+        if PULSAR_UNA_VEZ == 1:
+            tablero[50][30] = 2
+            PULSAR_UNA_VEZ = 0
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             if PAUSE==0:
+                PAUSA_STR = "Pausado"
+                PAUSA_TEXT = FONT_START.render("El juego está actualmente: " +PAUSA_STR, True, WHITE)
                 PAUSE = 1
+                print(PAUSA_STR)
             elif PAUSE == 1:
+                PAUSA_STR = "En ejecución"
+                PAUSA_TEXT = FONT_START.render("El juego está actualmente: " + PAUSA_STR, True, WHITE)
                 PAUSE = 0
-
+                print(PAUSA_STR)
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_r and PAUSE == 1:
+            BORRAR = True
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_s and PAUSE == 1:
+            UNA_ITERACION = True
 
 def dibujado(tablero_vacio): #Colorea la hormiga y su rastro
     for row in range(DIMENSION):
@@ -168,20 +193,63 @@ def tablero_vacio():
         tablero_vacio.append(row)
     return tablero_vacio
 
+def contador_poblacion(tablero):
+    cont = 0
+    for i in range(DIMENSION):
+        for j in range(DIMENSION):
+            if tablero[i][j] == 1:
+                cont += 1
+    return cont
+
+
+
 # -------- Loop principal del script -----------
 while not done:
-    listener(tablero)  # Está a la escucha de los clicks
-    screen.fill(GRAY) #Color del fondo
-    screen.blit(TEXT_CABECERA, (10 + WINDOW_CTE * DIMENSION,50))
-    
-    #Aqui se ejecuta 
+    listener(tablero)
+    screen.fill(BLACK)
+
+    screen.blit(TEXT_CABECERA, (100 + WINDOW_CTE * DIMENSION, 25))
+    screen.blit(INFO_TEXT1, (50 + WINDOW_CTE * DIMENSION, 100))
+    screen.blit(INFO_TEXT3, (50 + WINDOW_CTE * DIMENSION, 110))
+    screen.blit(INFO_TEXT4, (50 + WINDOW_CTE * DIMENSION, 120))
+    screen.blit(PAUSA_TEXT, (50 + WINDOW_CTE * DIMENSION, 280))
+    screen.blit(ITERA_TEXT, (50 + WINDOW_CTE * DIMENSION, 290))
+    screen.blit(POBLACION_TEXT, (50 + WINDOW_CTE * DIMENSION, 300))
+    screen.blit(AUTORES_TEXT, (50 + WINDOW_CTE * DIMENSION, 340))
+    screen.blit(AUTORES_TEXT2, (50 + WINDOW_CTE * DIMENSION, 350))
+    screen.blit(AUTORES_TEXT4, (50 + WINDOW_CTE * DIMENSION, 360))
+    screen.blit(AUTORES_TEXT3, (50 + WINDOW_CTE * DIMENSION, 370))
+    screen.blit(AUTORES_TEXT5, (50 + WINDOW_CTE * DIMENSION, 380))
+
     if PAUSE == 0:
-        generar_siguiente_generacion = iteracion(tablero, tablero) 
-        dibujado(generar_siguiente_generacion) #Dibujamos la pantalla según el nuevo tablero
-        tablero = generar_siguiente_generacion #Ponemos el tablero base como la nueva generación
+        ITERACIONES += 1
+        ITERA_TEXT = FONT_START.render("Número de iteraciones: " + str(ITERACIONES), True, WHITE)
+        generar_siguiente_generacion = iteracion(tablero,tablero)  # En el tablero vacio generamos la siguiente generacion.
+        dibujado(generar_siguiente_generacion)  # Dibujamos la pantalla según el nuevo tablero
+        tablero = generar_siguiente_generacion  # Ponemos el tablero base como la nueva generación
+        POBLACION = contador_poblacion(tablero)
+        POBLACION_TEXT = FONT_START.render("Población: " + str(POBLACION), True, WHITE)
+
     if PAUSE == 1:
+        POBLACION = contador_poblacion(tablero)
+        POBLACION_TEXT = FONT_START.render("Población: " + str(POBLACION), True, WHITE)
+        if BORRAR:
+            ITERACIONES = 0
+            ITERA_TEXT = FONT_START.render("Número de iteraciones: " + str(ITERACIONES), True, WHITE)
+            tablero = tablero_vacio()
+            tablero[50][30] = 2
+            dibujado(tablero)
+            BORRAR = False
+        if UNA_ITERACION:
+            ITERACIONES += 1
+            ITERA_TEXT = FONT_START.render("Número de iteraciones: " + str(ITERACIONES), True, WHITE)
+            generar_siguiente_generacion = iteracion(tablero,tablero)  # En el tablero vacio generamos la siguiente generacion.
+            dibujado(generar_siguiente_generacion)  # Dibujamos la pantalla según el nuevo tablero
+            tablero = generar_siguiente_generacion  # Ponemos el tablero base como la nueva generación
+            UNA_ITERACION = False
+
         dibujado(tablero)
-    #-------------------------------
+        #-------------------------------
     clock.tick(60) #Fps a los que ira el juego
     pygame.display.flip()  # actualizamos con lo que hemos dibujado
 
